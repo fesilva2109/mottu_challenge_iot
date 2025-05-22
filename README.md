@@ -32,6 +32,7 @@ No Windows (cmd):
 ### 4. Instale as dependências4. Instale as dependências
 pip install -r requirements.txt
 
+### 5. Rodar a Main
 python3 src/main.py
 
 ### 🛠️ Dependências Principais
