@@ -48,7 +48,7 @@ ou
 python3 src/main.py
 
 ### Visualizando o Resultado
-O resultado irá aparecer na aba de notebooks em uma pasta que será criada com a nomenclatura de 'imagens'. Portando, para verificar o sucesso da categorização como motos, é somente acessar o arquivo gerado e conferir a porcentagem de certeza do modelo em que a figura que ele está vendo, se enquadra como uma moto.
+Para verificar se as imagens foram corretamente categorizadas como motos, acesse a pasta "imagens" na aba de notebooks. Lá, em um arquivo gerado, você encontrará a porcentagem de certeza com que o modelo classificou cada figura como uma moto.
 
 
 ### 🛠️ Dependências Principais
