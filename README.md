@@ -97,8 +97,13 @@ pip3 install numpy==1.26.4
 
 ## ▶️ Execução
 Executar o pipeline completo
-O script main.py é o ponto de entrada para executar o pipeline completo de detecção e identificação.
 
+### Instalar Interpretador no Kernel
+pip install ipykernel
+python -m ipykernel install --user --name=venv_python
+
+
+O script main.py é o ponto de entrada para executar o pipeline completo de detecção e identificação.
 
 python src/main.py
 # ou
