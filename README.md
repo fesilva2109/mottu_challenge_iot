@@ -47,6 +47,10 @@ python src/main.py
 ou
 python3 src/main.py
 
+### Visualizando o Resultado
+O resultado irá aparecer na aba de notebooks em uma pasta que será criada com a nomenclatura de 'imagens'. Portando, para verificar o sucesso da categorização como motos, é somente acessar o arquivo gerado e conferir a porcentagem de certeza do modelo em que a figura que ele está vendo, se enquadra como uma moto.
+
+
 ### 🛠️ Dependências Principais
 Python 3.9+ 
 
