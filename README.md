@@ -109,9 +109,7 @@ python src/main.py
 # ou
 python3 src/main.py
 
-O main.py contém:
-
-Executar a detecção de motocicletas (possivelmente referenciando ou incorporando a lógica do notebook original ou usando diretamente o YOLOv8).
+O main.py executa a detecção de motocicletas. Dessa forma gerando o arquivo de identificação das motos nesse path: noebooks/imagens/
 
 python src/detect_and_map.py
 # ou
@@ -125,7 +123,7 @@ Gera a imagem anotada imagens/output.jpg.
 Cria o arquivo imagens/patio_map.json com ID e coordenadas.
 
 ## 👀 Resultados
-Imagem Anotada: imagens/output.jpg (mostra as motos detectadas com os IDs identificados)
+Imagem Anotada: imagens/output.jpg (mostra as motos detectadas com os IDs identificados, com exceção do 47, em que só identificado o 4)
 Dados JSON: imagens/patio_map.json (contém os IDs das motos e suas respectivas coordenadas na imagem)
 Resultado da Detecção Inicial (via main.py ou notebook): O formato e a localização dos resultados da detecção inicial (se executada separadamente) dependerão da implementação no main.py ou no notebook iot_challenge_mottu.ipynb. Geralmente, pode ser um arquivo de texto com as porcentagens de certeza da detecção das motos.
 
