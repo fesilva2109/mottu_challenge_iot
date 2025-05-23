@@ -103,16 +103,16 @@ pip install ipykernel
 python -m ipykernel install --user --name=venv_python
 
 
-O script main.py é o ponto de entrada para executar o pipeline completo de detecção e identificação.
+### O script main.py é o ponto de entrada para executar o pipeline completo de detecção e identificação.
 
 python src/main.py
-# ou
+ou
 python3 src/main.py
 
-O main.py executa a detecção de motocicletas. Dessa forma gerando o arquivo de identificação das motos nesse path: noebooks/imagens/
+### O main.py executa a detecção de motocicletas. Dessa forma gerando o arquivo de identificação das motos nesse path: notebooks/imagens/
 
 python src/detect_and_map.py
-# ou
+ou
 python3 src/detect_and_map.py
 Este script:
 
