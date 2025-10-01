@@ -1,0 +1,6 @@
+# Ignorar todo o ambiente virtual
+motorcycle-detection/.venv/
+
+# Ignorar arquivos temporários do Python
+__pycache__/
+*.pyc
