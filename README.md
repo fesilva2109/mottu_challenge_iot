@@ -29,29 +29,29 @@ Automatizar o monitoramento de um pátio de motocicletas, fornecendo dados em te
 
 ---
 
-## 📂 Estrutura do Projeto
+## 📂 Estrutura do Projeto  
 
+```bash
 motorcycle-detection/
 ├── imagens/
 │   ├── patio.jpg                   # Imagem de entrada para detecção
-│   ├── patio1.jpg                  # Outra imagem de entrada (exemplo)
+│   ├── patio1.jpg                  # Outra imagem de exemplo
 ├── notebooks/
-│   └── iot_challenge_mottu.ipynb   # Notebook original para exploração e detecção
+│   └── iot_challenge_mottu.ipynb   # Notebook original de exploração
 ├── src/
-│   ├── detect_and_map.py           # Script para análise de imagem estática (detecção + OCR)
-│   ├── realtime_processing.py      # Script principal para rastreamento em tempo real e registro de eventos
-│   ├── api_client.py               # Módulo cliente para comunicação com API (simulado)
-│   ├── database.py                 # Módulo de gerenciamento de conexão com o banco de dados
-│   └── main.py                     # Script auxiliar para executar o notebook
+│   ├── detect_and_map.py           # Detecção + OCR em imagens estáticas
+│   ├── realtime_processing.py      # Pipeline de rastreamento em tempo real
+│   ├── api_client.py               # Cliente para integração com API
+│   ├── database.py                 # Conexão com banco de dados Oracle
+│   └── main.py                     # Execução auxiliar do notebook
 ├── video/
-│   └── video_iot.mp4               # Vídeo de entrada para rastreamento em tempo real
+│   └── video_iot.mp4               # Vídeo de teste para rastreamento
 ├── .gitignore
 ├── requirements.txt
 └── README.md
 
-
+```
 ---
-
 ## 🔧 Configuração do Ambiente
 
 > ⚠️ **Importante:** Utilize um ambiente virtual para garantir o correto funcionamento das dependências.
