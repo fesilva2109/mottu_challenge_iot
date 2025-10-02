@@ -162,3 +162,7 @@ Consulte requirements.txt para a lista completa.
 
 ## 📌 Contribuições
 Sinta-se à vontade para abrir issues ou pull requests com melhorias, correções ou sugestões para o projeto.
+
+
+## 📹 Vídeo Youtube 
+"https://youtu.be/Ll82ktuZl0M?si=ySxBO8izxofs576-"
