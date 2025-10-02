@@ -2,6 +2,13 @@
 
 Este projeto implementa um pipeline de visão computacional para detecção, rastreamento e gerenciamento de motocicletas em tempo real.
 
+**Integrantes:**
+
+1. Eduardo Henrique Strapazzon Nagado - RM558158 
+2. Felipe Silva Maciel -RM555307
+3. Gustavo Ramires Lazzuri - RM556772
+
+
 **Funcionalidades Principais:**
 
 1.  **Detecção e Rastreamento em Tempo Real:** Utiliza o modelo YOLOv8 para identificar e rastrear múltiplas motocicletas em um stream de vídeo (câmera ou arquivo). A cada moto é atribuído um ID de rastreamento único.
