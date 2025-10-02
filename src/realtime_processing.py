@@ -12,7 +12,7 @@ FRAMES_PARA_CONFIRMAR_SAIDA = 15  # Nº de frames que uma moto deve estar ausent
 CLASSE_ALVO = [3]  # Classe de 'motorcycle' no modelo COCO
 
 # --- URL DA API ---
-API_BASE_URL = "https://68dd9c25d7b591b4b78cea09.mockapi.io/api/v1"
+API_BASE_URL = "https://gef-mottu-dev-app-a2dffngahzayd3an.brazilsouth-01.azurewebsites.net/api"
 
 
 def processa_frame(frame, model, db_manager):
