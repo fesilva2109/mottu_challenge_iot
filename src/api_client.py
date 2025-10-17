@@ -20,7 +20,7 @@ class APIClient:
         try:
             # Envia o evento para a API real
             response = requests.post(endpoint, json=payload, timeout=5)
-            response.raise_for_status() # Lança um erro para status codes 4xx/5xx
+            response.raise_for_status()
             
             # Status 201 (Created) é o esperado para um POST bem-sucedido
             if response.status_code == 201:
