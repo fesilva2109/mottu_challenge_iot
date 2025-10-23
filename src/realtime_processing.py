@@ -6,7 +6,7 @@ from api_client import APIClient
 from database import DatabaseManager
 
 # --- PARÂMETROS DE CONFIGURAÇÃO ---
-VIDEO_SOURCE = 0  # Use 0 para webcam (para escanear em tempo real) ou o caminho para um arquivo de vídeo, ex: "0"
+VIDEO_SOURCE = 0  # Use 0 para webcam (para escanear em tempo real) ou o caminho para um arquivo de vídeo
 
 # Modelo local para RASTREAMENTO (tracking)
 TRACKING_MODEL_PATH = 'yolov8n.pt'
@@ -14,8 +14,8 @@ TRACKING_CLASS_ID = [3]  # Classe 'motorcycle' no modelo COCO
 
 # --- CONFIGURAÇÃO ROBOFLOW HTTP API (para CLASSIFICAÇÃO) ---
 ROBOFLOW_API_URL = "https://detect.roboflow.com"
-ROBOFLOW_API_KEY = "aFBnNsh545I9GTlTUzpa"  # API KEY 
-ROBOFLOW_MODEL_ID = "mottu-iot-iycbr/1"   # MODEL ID 
+ROBOFLOW_API_KEY = "aFBnNsh545I9GTlTUzpa"
+ROBOFLOW_MODEL_ID = "mottu-iot-iycbr/1"
 
 CONFIDENCE_THRESHOLD = 0.5  # Limiar de confiança para o RASTREAMENTO (tracking)
 CLASSIFICATION_CONFIDENCE_THRESHOLD = 0.80  # 80% de confiança para a CLASSIFICAÇÃO do modelo
@@ -24,6 +24,16 @@ FRAMES_PARA_CONFIRMAR_SAIDA = 15  # Nº de frames que uma moto deve estar ausent
 # --- URL DA API ---
 API_BASE_URL = "https://gef-mottu-dev-app-a2dffngahzayd3an.brazilsouth-01.azurewebsites.net/api"
 
+def format_model_name(name_from_api):
+    if name_from_api == 'mottu_e':
+        return 'Mottu-E'
+    elif name_from_api == 'mottu_pop':
+        return 'Mottu Pop'
+    elif name_from_api == 'mottu_sport':
+        return 'Mottu Sport'
+    else:
+        return name_from_api.replace('_', ' ').title()
+    
 
 def processa_frame(frame, tracking_model, roboflow_client, db_manager, api_client):
     # 1. Rastreia objetos da classe 'motorcycle' para obter IDs estáveis
@@ -32,7 +42,6 @@ def processa_frame(frame, tracking_model, roboflow_client, db_manager, api_clien
     motos_no_frame_atual = set()
     annotated_frame = frame.copy()
 
-    # Se houver rastreamentos, processa cada um
     if results[0].boxes.id is not None:
         boxes = results[0].boxes.xyxy.cpu().numpy().astype(int)
         track_ids = results[0].boxes.id.cpu().numpy().astype(int)
@@ -56,13 +65,13 @@ def processa_frame(frame, tracking_model, roboflow_client, db_manager, api_clien
 
                 # CONDIÇÃO PRINCIPAL: Só registra no banco e envia para a API se a confiança for alta
                 if confidence >= CLASSIFICATION_CONFIDENCE_THRESHOLD:
-                    model_name = top_prediction['class']
+                    raw_model_name = top_prediction['class']
+                    model_name = format_model_name(raw_model_name)
                     
                     # Calcula o centro da moto para registrar sua localização
                     center_x = (box[0] + box[2]) // 2
                     center_y = (box[1] + box[3]) // 2
 
-                    # Insere no banco de dados e envia para a API apenas se o modelo for confiável
                     db_manager.insert_detection(moto_id_str, int(center_x), int(center_y), model_name)
                     api_client.send_detection_event(moto_id_str, model_name, int(center_x), int(center_y), status="em_patio")
                 else:
@@ -82,13 +91,15 @@ def gerencia_eventos(motos_presentes, motos_no_frame_atual, motos_desaparecidas,
     for moto_id in motos_que_entraram:
         print(f"EVENTO [ENTRADA]: Moto {moto_id} detectada. Adicionada ao pátio.")
         motos_presentes.add(moto_id)
-        motos_desaparecidas[moto_id] = 0  # Reseta o contador caso a moto retorne (se ela reaparecer antes de ser considerada 'saída')
+        motos_desaparecidas[moto_id] = 0  # Reseta o contador caso a moto retorne
         # O evento de entrada é gerenciado localmente; a API recebe o status "em_patio" a cada frame.
 
     # Evento de SAÍDA: motos que estavam na lista de presentes mas não estão no frame atual
     motos_potencialmente_fora = motos_presentes - motos_no_frame_atual
     for moto_id in motos_potencialmente_fora:
         motos_desaparecidas[moto_id] += 1
+        
+        # Confirma a saída apenas após N frames de ausência
         if motos_desaparecidas[moto_id] > FRAMES_PARA_CONFIRMAR_SAIDA:
             print(f"EVENTO [SAÍDA]: Moto {moto_id} desapareceu por {FRAMES_PARA_CONFIRMAR_SAIDA} frames. Removida do pátio.")
             motos_presentes.remove(moto_id)
@@ -108,10 +119,8 @@ def main():
     )
 
     # --- CONTROLE DE ESTADO ---
-    # Guarda as motos que estão confirmadas no pátio
-    motos_presentes = set()  
-    # Conta frames de ausência para cada moto
-    motos_desaparecidas = defaultdict(int)  
+    motos_presentes = set()  # Guarda as motos que estão confirmadas no pátio
+    motos_desaparecidas = defaultdict(int)  # Conta frames de ausência para cada moto
 
     # --- CONFIGURAÇÃO DO VÍDEO ---
     cap = cv2.VideoCapture(VIDEO_SOURCE)
