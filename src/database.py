@@ -18,14 +18,14 @@ class DatabaseManager:
             self.connection = None
             self.cursor = None
 
-    def insert_detection(self, moto_id, x, y):
+    def insert_detection(self, moto_id, x, y, model_name=None):
         if not self.cursor:
             print("Não há conexão com o banco para inserir dados.")
             return
 
-        sql = "INSERT INTO Detections (moto_id, center_x, center_y) VALUES (:1, :2, :3)"
+        sql = "INSERT INTO Detections (moto_id, center_x, center_y, model_name) VALUES (:1, :2, :3, :4)"
         try:
-            self.cursor.execute(sql, [moto_id, x, y])
+            self.cursor.execute(sql, [moto_id, x, y, model_name])
             self.connection.commit()
         except oracledb.DatabaseError as e:
             print(f"Erro ao inserir no banco de dados: {e}")

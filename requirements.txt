@@ -6,3 +6,4 @@ requests
 oracledb
 pytesseract
 numpy==1.26.4
+inference-sdk

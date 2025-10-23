@@ -1,40 +1,77 @@
 import cv2
 from ultralytics import YOLO
+from inference_sdk import InferenceHTTPClient
 from collections import defaultdict
 from api_client import APIClient
 from database import DatabaseManager
 
 # --- PARÂMETROS DE CONFIGURAÇÃO ---
-VIDEO_SOURCE = "video/video_iot.mp4"  # Use 0 para webcam (para escanear em tempo real) ou o caminho para um arquivo de vídeo
-MODEL_PATH = 'yolov8n.pt'
-CONFIDENCE_THRESHOLD = 0.5  # Limiar de confiança para considerar uma detecção válida
+VIDEO_SOURCE = 0  # Use 0 para webcam (para escanear em tempo real) ou o caminho para um arquivo de vídeo, ex: "0"
+
+# Modelo local para RASTREAMENTO (tracking)
+TRACKING_MODEL_PATH = 'yolov8n.pt'
+TRACKING_CLASS_ID = [3]  # Classe 'motorcycle' no modelo COCO
+
+# --- CONFIGURAÇÃO ROBOFLOW HTTP API (para CLASSIFICAÇÃO) ---
+ROBOFLOW_API_URL = "https://detect.roboflow.com"
+ROBOFLOW_API_KEY = "aFBnNsh545I9GTlTUzpa"  # API KEY 
+ROBOFLOW_MODEL_ID = "mottu-iot-iycbr/1"   # MODEL ID 
+
+CONFIDENCE_THRESHOLD = 0.5  # Limiar de confiança para o RASTREAMENTO (tracking)
+CLASSIFICATION_CONFIDENCE_THRESHOLD = 0.80  # 80% de confiança para a CLASSIFICAÇÃO do modelo
 FRAMES_PARA_CONFIRMAR_SAIDA = 15  # Nº de frames que uma moto deve estar ausente para ser considerada como 'saiu'
-CLASSE_ALVO = [3]  # Classe de 'motorcycle' no modelo COCO
 
 # --- URL DA API ---
 API_BASE_URL = "https://gef-mottu-dev-app-a2dffngahzayd3an.brazilsouth-01.azurewebsites.net/api"
 
 
-def processa_frame(frame, model, db_manager):
-    # Executa o rastreador do YOLO, filtrando pela classe de motocicleta
-    results = model.track(frame, persist=True, classes=CLASSE_ALVO, conf=CONFIDENCE_THRESHOLD)
-    
+def processa_frame(frame, tracking_model, roboflow_client, db_manager, api_client):
+    # 1. Rastreia objetos da classe 'motorcycle' para obter IDs estáveis
+    results = tracking_model.track(frame, persist=True, classes=TRACKING_CLASS_ID, conf=CONFIDENCE_THRESHOLD)
+
     motos_no_frame_atual = set()
-    annotated_frame = results[0].plot() 
+    annotated_frame = frame.copy()
 
     # Se houver rastreamentos, processa cada um
     if results[0].boxes.id is not None:
         boxes = results[0].boxes.xyxy.cpu().numpy().astype(int)
         track_ids = results[0].boxes.id.cpu().numpy().astype(int)
 
-        for box, track_id in zip(boxes, track_ids):
+        for i, (box, track_id) in enumerate(zip(boxes, track_ids)):
             moto_id_str = f'moto_{track_id}'
             motos_no_frame_atual.add(moto_id_str)
 
-            # Calcula o centro da moto para registrar sua localização
-            center_x = (box[0] + box[2]) // 2
-            center_y = (box[1] + box[3]) // 2
-            db_manager.insert_detection(moto_id_str, int(center_x), int(center_y))
+            # 2. Recorta a imagem da moto e envia para o Roboflow para classificar o modelo
+            x1, y1, x2, y2 = box
+            cropped_moto = frame[y1:y2, x1:x2]
+            classification_result = roboflow_client.infer(cropped_moto, model_id=ROBOFLOW_MODEL_ID)
+
+            # A API retorna um dicionário. Acessamos as predições e o nome da classe usando chaves.
+            predictions = classification_result.get('predictions', [])
+            model_name = 'Analisando...'  # Valor padrão para exibição
+            
+            if predictions:
+                top_prediction = predictions[0]
+                confidence = top_prediction.get('confidence', 0)
+
+                # CONDIÇÃO PRINCIPAL: Só registra no banco e envia para a API se a confiança for alta
+                if confidence >= CLASSIFICATION_CONFIDENCE_THRESHOLD:
+                    model_name = top_prediction['class']
+                    
+                    # Calcula o centro da moto para registrar sua localização
+                    center_x = (box[0] + box[2]) // 2
+                    center_y = (box[1] + box[3]) // 2
+
+                    # Insere no banco de dados e envia para a API apenas se o modelo for confiável
+                    db_manager.insert_detection(moto_id_str, int(center_x), int(center_y), model_name)
+                    api_client.send_detection_event(moto_id_str, model_name, int(center_x), int(center_y), status="em_patio")
+                else:
+                    model_name = 'Modelo Incerto'  # Se a confiança for baixa, apenas exibe na tela
+
+            # Desenha anotações no frame
+            label = f"ID: {track_id} - {model_name}"
+            cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(annotated_frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
     return annotated_frame, motos_no_frame_atual
 
@@ -45,8 +82,8 @@ def gerencia_eventos(motos_presentes, motos_no_frame_atual, motos_desaparecidas,
     for moto_id in motos_que_entraram:
         print(f"EVENTO [ENTRADA]: Moto {moto_id} detectada. Adicionada ao pátio.")
         motos_presentes.add(moto_id)
-        motos_desaparecidas[moto_id] = 0  # Reseta o contador caso a moto retorne
-        api_client.send_event('moto_entrou', moto_id)
+        motos_desaparecidas[moto_id] = 0  # Reseta o contador caso a moto retorne (se ela reaparecer antes de ser considerada 'saída')
+        # O evento de entrada é gerenciado localmente; a API recebe o status "em_patio" a cada frame.
 
     # Evento de SAÍDA: motos que estavam na lista de presentes mas não estão no frame atual
     motos_potencialmente_fora = motos_presentes - motos_no_frame_atual
@@ -55,15 +92,20 @@ def gerencia_eventos(motos_presentes, motos_no_frame_atual, motos_desaparecidas,
         if motos_desaparecidas[moto_id] > FRAMES_PARA_CONFIRMAR_SAIDA:
             print(f"EVENTO [SAÍDA]: Moto {moto_id} desapareceu por {FRAMES_PARA_CONFIRMAR_SAIDA} frames. Removida do pátio.")
             motos_presentes.remove(moto_id)
-            del motos_desaparecidas[moto_id] 
-            api_client.send_event('moto_saiu', moto_id)
+            del motos_desaparecidas[moto_id]
+            # Aqui você poderia chamar um endpoint específico para 'moto_saiu', se a arquitetura exigir.
+            # api_client.send_event('moto_saiu', moto_id)
 
 
 def main():
     # --- INICIALIZAÇÃO DOS SERVIÇOS ---
     api_client = APIClient(base_url=API_BASE_URL)
     db_manager = DatabaseManager()
-    model = YOLO(MODEL_PATH)
+    tracking_model = YOLO(TRACKING_MODEL_PATH)
+    roboflow_client = InferenceHTTPClient(
+        api_url=ROBOFLOW_API_URL,
+        api_key=ROBOFLOW_API_KEY
+    )
 
     # --- CONTROLE DE ESTADO ---
     # Guarda as motos que estão confirmadas no pátio
@@ -87,7 +129,7 @@ def main():
             break
 
         # 1. Processa o frame para detectar e rastrear as motos
-        annotated_frame, motos_no_frame_atual = processa_frame(frame, model, db_manager)
+        annotated_frame, motos_no_frame_atual = processa_frame(frame, tracking_model, roboflow_client, db_manager, api_client)
 
         # 2. Gerencia os eventos de entrada e saída
         gerencia_eventos(motos_presentes, motos_no_frame_atual, motos_desaparecidas, api_client)
