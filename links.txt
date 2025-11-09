@@ -1,0 +1,7 @@
+## 1. Repositório no GitHub
+Link para o repositório principal do projeto.
+https://github.com/fesilva2109/test_mobile_mottu
+
+## 2. Vídeo de Apresentação
+Link para o vídeo demonstrando todas as funcionalidades do projeto.
+https://youtu.be/vFNWEzWuZ0c?si=c3iqPxp814yybjNo

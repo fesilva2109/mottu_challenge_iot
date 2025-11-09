@@ -168,5 +168,4 @@ Sinta-se à vontade para abrir issues ou pull requests com melhorias, correçõe
 
 
 ## 📹 Vídeo Youtube 
-* VIDEO 1 (RODANDO O PROJETO): https://youtu.be/Ll82ktuZl0M?si=ySxBO8izxofs576-
-* VIDEO 2 (RESULTADOS): https://youtube.com/shorts/AOljZhG7oNY
+* VIDEO: https://youtu.be/vFNWEzWuZ0c?si=c3iqPxp814yybjNo
