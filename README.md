@@ -8,18 +8,21 @@ Este projeto implementa um pipeline de visão computacional para detecção, ras
 2. Felipe Silva Maciel -RM555307
 3. Gustavo Ramires Lazzuri - RM556772
 
+---
 
-**Funcionalidades Principais:**
+## ✨ Funcionalidades Principais
 
-1.  **Detecção e Rastreamento em Tempo Real:** Utiliza o modelo YOLOv8 para identificar e rastrear múltiplas motocicletas em um stream de vídeo (câmera ou arquivo). A cada moto é atribuído um ID de rastreamento único.
+1.  **Detecção e Rastreamento em Tempo Real:** Utiliza o modelo **YOLOv8** para identificar e atribuir um ID de rastreamento único a cada motocicleta em um stream de vídeo (webcam ou arquivo).
 
-2.  **Registro de Eventos (Entrada/Saída):** O sistema detecta quando uma nova moto entra no campo de visão e quando uma moto sai, simulando o envio desses eventos para um backend via API.
+2.  **Classificação de Modelos:** Integra-se com uma API do **Roboflow** para classificar o modelo específico de cada moto detectada (ex: `Mottu Pop`, `Mottu-E`), enriquecendo os dados coletados.
 
-3.  **Persistência de Dados:** O histórico de detecções (ID da moto e sua localização) é registrado em um banco de dados Oracle, criando um registro persistente da presença das motos.
+3.  **Dashboard Visual Interativo:** Exibe uma interface em tempo real com:
+    - **Contagem total** de motos no pátio.
+    - **Contagem por modelo** das motos visíveis.
+    - **Log de eventos** de entrada e saída.
+    - **Indicadores visuais:** Caixas delimitadoras mudam de cor para alertar sobre motos que estão prestes a sair do pátio.
 
-4.  **Análise de Imagem Estática (Funcionalidade Original):**
-    - **Detecção com YOLOv8:** Identifica motocicletas em uma imagem estática.
-    - **Identificação de IDs com OCR:** Emprega OCR para ler os números amarelos nos bancos das motos detectadas, mapeando sua localização e associando o ID.
+4.  **Integração com Backend e Banco de Dados:** Envia os dados de cada detecção (ID, modelo, localização) para uma **API REST** e persiste as informações em um banco de dados **Oracle**, demonstrando um fluxo de dados ponta a ponta.
 
 ---
 
@@ -60,7 +63,6 @@ motorcycle-detection/
 
 
 git clone [https://github.com/fesilva2109/mottu_challenge_iot.git](https://github.com/fesilva2109/mottu_challenge_iot.git)
-cd motorcycle-detection
 
 ### 2. Crie um ambiente virtual
 
@@ -79,9 +81,9 @@ Windows (cmd):
 
 ### 4. Instale as dependências
 
-pip install -r requirements.txt
+pip install -r requirements.txt -v
 # ou
-pip3 install -r requirements.txt
+pip3 install -r requirements.txt -v
 
 ### 5. Instale o Tesseract OCR
 macOS (via Homebrew):
@@ -124,11 +126,12 @@ python src/realtime_processing.py
 
 Este script irá:
 - Iniciar a detecção e rastreamento de motos via webcam.
-- Exibir um output visual com as motos detectadas e seus IDs de rastreamento.
-- Imprimir no console os eventos de "moto entrou" e "moto saiu".
-- Tentar registrar cada detecção em um banco de dados Oracle (requer configuração de credenciais).
+- Exibir o dashboard visual com contadores, logs e indicadores.
+- Imprimir no console os eventos de entrada e saída.
+- Enviar os dados para a API configurada.
+- Registrar cada detecção em um banco de dados Oracle (se as credenciais estiverem configuradas).
 
-
+---
 ### 2. Executar a Análise de Imagem Estática 
 
 ```bash
@@ -143,7 +146,7 @@ Cria o arquivo imagens/patio_map.json com ID e coordenadas.
 
 ## 👀 Resultados
 
-*   **Output Visual em Tempo Real:** Uma janela de vídeo mostrando as motos rastreadas com suas caixas delimitadoras e IDs.
+*   **Dashboard em Tempo Real:** Uma janela de vídeo mostrando o dashboard com as motos rastreadas, contadores, logs e indicadores visuais.
 *   **Logs de Eventos no Console:** Mensagens como `EVENTO [ENTRADA]: Moto moto_1 detectada.` e `EVENTO [SAÍDA]: Moto moto_1 desapareceu.`.
 *   **Banco de Dados:** (Se configurado) A tabela `Detections` será populada com o histórico de localizações das motos.
 *   **Resultados da Análise Estática:**

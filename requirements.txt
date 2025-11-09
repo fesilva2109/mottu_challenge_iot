@@ -7,3 +7,5 @@ oracledb
 pytesseract
 numpy==1.26.4
 inference-sdk
+
+lap>=0.5.12
